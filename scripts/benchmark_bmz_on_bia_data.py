@@ -295,9 +295,6 @@ def main(bmz_model,ome_zarr_uri,reference_annotations,plot_images,crop_image, z_
     print(f"SSIM score input image: {ssim_score}")
 
 
-
-
-
     if plot_images:
         plt.figure()
         ax1 = plt.subplot(2, 3, 1)
