@@ -20,7 +20,7 @@ from bia_bmz_integration import process
               help="select a channel to benchmark from the prediction")
 
 def main(bmz_model,ome_zarr_uri,reference_annotations,plot_images,crop_image, z_slices,channel,t_slices, benchmark_channel):
-   return process(bmz_model, ome_zarr_uri, reference_annotations, crop_image, z_slices, channel, t_slices, benchmark_channel)
+   return (bmz_model,ome_zarr_uri,reference_annotations,plot_images,crop_image, z_slices,channel,t_slices, benchmark_channel)
 
 if __name__ == "__main__":
     main()
