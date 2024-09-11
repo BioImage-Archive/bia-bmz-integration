@@ -109,40 +109,54 @@ def reorder_array_dimensions(in_tensor, in_id):
 def run_model_inference(bmz_model, image):
     # load model
     model_resource = bioimageio.core.load_description(bmz_model)
-    expected_input_shape = model_resource.inputs[0].shape
-    
-    # try:
-    test_input_image = load_array(model_resource.inputs[0].test_tensor)
-    # except Exception as e:
-    #     test_input_image = load_array(model_resource.test_inputs[0])
-    # if image.shape != expected_input_shape:
-    #     raise ValueError(f"Input image shape {image.shape} does not match expected shape {expected_input_shape}")
-    
+
+    # test model
+
+    # test_summary = test_model(model_resource)
+    # print(test_summary)
+
+    # check model specification version
     if isinstance(model_resource, v0_5.ModelDescr):
-        # Reshape data to match model input dimensions
-        # new_np_array = np.squeeze(arr).compute()
+        # load test image
+        test_input_image = load_array(model_resource.inputs[0].test_tensor)
+
+        # match test data type with the data type of the model input
+        # reshape data to match model input dimensions
+        new_np_array=np.squeeze(image.astype(test_input_image.dtype))
+
         indices = [i for i in range(len(test_input_image.shape)) if test_input_image.shape[i] == 1]
-        right_dims = np.expand_dims(image, indices)
+        right_dims = np.expand_dims(new_np_array, indices)
+
+        # convert image to tensor
         input_tensor = Tensor.from_numpy(right_dims, dims=tuple(model_resource.inputs[0].axes))
 
-        # Create collection of tensors (sample)
-        inp_id = model_resource.inputs[0].id
-        outp_id = model_resource.outputs[0].id
+        # create collection of tensors (sample)
+        inp_id=model_resource.inputs[0].id
+        outp_id=model_resource.outputs[0].id
         sample = Sample(members={inp_id: input_tensor}, stat={}, id="id")
 
     elif isinstance(model_resource, v0_4.ModelDescr):
-        new_np_array = np.squeeze().compute()
+        # load test image
+        test_input_image = load_array(model_resource.test_inputs[0])
+
+        # match test data type with the data type of the model input
+        # reshape data to match model input dimensions
+        new_np_array=np.squeeze(image.astype(test_input_image.dtype))
+
         indices = [i for i in range(len(test_input_image.shape)) if test_input_image.shape[i] == 1]
         right_dims = np.expand_dims(new_np_array, indices)
+
+        # convert image to tensor 
         input_tensor = Tensor.from_numpy(right_dims, dims=tuple(model_resource.inputs[0].axes))
 
-        # Create collection of tensors (sample)
-        inp_id = model_resource.inputs[0].name
-        outp_id = model_resource.outputs[0].name
+        # create collection of tensors (sample)
+        inp_id=model_resource.inputs[0].name
+        outp_id=model_resource.outputs[0].name
         sample = Sample(members={inp_id: input_tensor}, stat={}, id="id")
-    
+
     else:
-        raise ValueError("This model specification version is not supported")
+        print("This model specification version is not supported")
+
 
     prediction_pipeline = create_prediction_pipeline(model_resource)
     prediction = prediction_pipeline.predict_sample_without_blocking(sample)
