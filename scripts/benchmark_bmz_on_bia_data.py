@@ -39,7 +39,10 @@ def reorder_array_dimensions(in_tensor,in_id):
 
     in_array = np.asarray(in_tensor.members[in_id].data)
     in_dim = in_tensor.members[in_id].dims
-    bch_index = in_dim.index('channel')
+    if 'channel' in in_dim:
+        bch_index = in_dim.index('channel')
+    elif 'c' in in_dim:
+        bch_index = in_dim.index('c')
     x_index = in_dim.index('x')
     y_index = in_dim.index('y') 
 
@@ -160,7 +163,7 @@ def main(bmz_model,ome_zarr_uri,reference_annotations,plot_images,crop_image, z_
     )
 
     # run prediction
-
+    #prediction: Sample = prediction_pipeline.predict_sample_without_blocking(input_tensor)
     prediction: Sample = prediction_pipeline.predict_sample_without_blocking(sample)
 
     # reorder prediction dimensions to "TCZYX" so metrics can be computed 
@@ -180,7 +183,6 @@ def main(bmz_model,ome_zarr_uri,reference_annotations,plot_images,crop_image, z_
     ref_array = np.asarray(ref_array)
     ref_array = ref_array.astype(test_input_image.dtype)
     t_reference = torch.from_numpy(ref_array)
-    (t_reference.shape)
     ref_array_binary = ref_array.astype(bool)
     t_reference_binary = torch.from_numpy(ref_array_binary)
 
