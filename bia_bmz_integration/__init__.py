@@ -7,8 +7,9 @@ import bioimageio.core
 from bioimageio.core import Tensor, Sample, test_model, create_prediction_pipeline
 from bioimageio.spec.utils import load_array
 from bioimageio.spec.model import v0_5, v0_4
-from monai.metrics import DiceMetric, MeanIoU, PSNRMetric, RMSEMetric, SSIMMetric
+from monai.metrics import DiceMetric, MeanIoU, PSNRMetric, RMSEMetric, SSIMMetric, ConfusionMatrixMetric, get_confusion_matrix, compute_confusion_matrix_metric
 import torch
+import pandas as pd
 
 # Function to create appropiate model inputs from zarr
 
@@ -33,60 +34,7 @@ def crop_center(array,window):
         return array[:,:,:,starty:starty+window[1],startx:startx+window[0]]
     else:
         print("reshape window values must be smaller than image dimensions")
-
-# Function to reorder tensor dimensions to match OME.Zarr dimension order: "TCZYX". Returns an array
-def reorder_array_dimensions(in_tensor,in_id):
-
-    in_array = np.asarray(in_tensor.members[in_id].data)
-    in_dim = in_tensor.members[in_id].dims
-    bch_index = in_dim.index('channel')
-    x_index = in_dim.index('x')
-    y_index = in_dim.index('y') 
-
-    if 'z' in in_dim:
-        z_index = in_dim.index('z') 
-        array_tczxy = np.transpose(in_array, (0, bch_index,z_index, y_index,x_index))
-    else:
-        array_tczxy = np.transpose(in_array, (0, bch_index, y_index,x_index))
-        array_tczxy = np.expand_dims(array_tczxy, 2)
-
-    return array_tczxy   
-
-
-import numpy as np
-import matplotlib.pyplot as plt
-import zarr
-import dask.array as da
-import bioimageio.core
-from bioimageio.core import Tensor, Sample, create_prediction_pipeline
-from bioimageio.spec.utils import load_array
-from bioimageio.spec.model import v0_5, v0_4
-from monai.metrics import DiceMetric, MeanIoU, PSNRMetric, RMSEMetric, SSIMMetric
-import torch
-
-
-# Function to create appropriate model inputs from zarr
-def remote_zarr_to_model_input(ome_zarr_uri):
-    """Makes many bad assumptions about shape."""
-    zgroup = zarr.open(ome_zarr_uri)
-    zarray = zgroup['0']    
-    darray = da.from_zarr(zarray)
-    return darray
-
-
-# Function to crop images
-def crop_center(array, window):
-    dims = array.shape
-    x = dims[-1]
-    y = dims[-2] 
-    if (x > window[0]) & (y > window[1]):
-        startx = x // 2 - (window[0] // 2)
-        starty = y // 2 - (window[1] // 2)  
-        return array[:, :, :, starty:starty+window[1], startx:startx+window[0]]
-    else:
-        print("reshape window values must be smaller than image dimensions")
-
-
+ 
 # Function to reorder tensor dimensions to match OME.Zarr dimension order: "TCZYX". Returns an array
 def reorder_array_dimensions(in_tensor, in_id):
     in_array = np.asarray(in_tensor.members[in_id].data)
@@ -148,6 +96,7 @@ def run_model_inference(bmz_model, arr):
 
 
 # Function to benchmark results
+
 def benchmark_results(t_output, t_binary_output, t_input, t_reference, t_reference_binary, max_val):
     iou_metric = MeanIoU(include_background=True, reduction="mean")
     iou_score = iou_metric(y_pred=t_binary_output, y=t_reference_binary)
@@ -156,7 +105,7 @@ def benchmark_results(t_output, t_binary_output, t_input, t_reference, t_referen
     dice_metric = DiceMetric(include_background=True, reduction="mean")
     dice_score = dice_metric(y_pred=t_binary_output, y=t_reference_binary)
     print(f"Dice score: {dice_score}")
-    
+
     psnr_metric = PSNRMetric(max_val, reduction="mean", get_not_nans=False)
     psnr_score = psnr_metric(y_pred=t_output, y=t_reference)
     print(f"PSNR score reconstructed image: {psnr_score}")
@@ -169,9 +118,14 @@ def benchmark_results(t_output, t_binary_output, t_input, t_reference, t_referen
     ssim_score = ssim_metric(y_pred=t_output[0, :, :, :, :], y=t_reference[0, :, :, :, :])
     print(f"SSIM score reconstructed image: {ssim_score}")
 
+    scores = [iou_score, dice_score, psnr_score,rmse_score,ssim_score]
+
+    return scores
+
+
 
 # Function to plot the results
-def plot_images(dask_array, output_array, ref_array, binary_output, ref_array_binary, benchmark_channel=0):
+def show_images(dask_array, output_array, ref_array, binary_output, ref_array_binary, benchmark_channel=0):
     correct_ch_output = np.take(output_array, [benchmark_channel], 1)
     
     plt.figure()
@@ -201,7 +155,7 @@ def plot_images(dask_array, output_array, ref_array, binary_output, ref_array_bi
     plt.imshow(binary_output[0, 0, 0, :, :])
     plt.show()
 
-def process(bmz_model, ome_zarr_uri, reference_annotations, crop_image=None, z_slices=None, channel=None, t_slices=None, benchmark_channel=0):
+def process(bmz_model, ome_zarr_uri, reference_annotations, plot_images=True, crop_image=None, z_slices=None, channel=None, t_slices=None, benchmark_channel=0):
     # Load image and annotations
     dask_array = remote_zarr_to_model_input(ome_zarr_uri)
     ref_array = remote_zarr_to_model_input(reference_annotations)
@@ -228,9 +182,10 @@ def process(bmz_model, ome_zarr_uri, reference_annotations, crop_image=None, z_s
 
     # Process results for benchmarking
     output_array = reorder_array_dimensions(prediction, outp_id)
+    print(output_array.shape)
     input_array = reorder_array_dimensions(sample, inp_id)
     correct_ch_output = np.take(output_array, [benchmark_channel], 1)
-    
+
     # Binarize output and reference arrays
     t_output = torch.from_numpy(correct_ch_output)
     binary_output = correct_ch_output >= 0.5
@@ -242,13 +197,37 @@ def process(bmz_model, ome_zarr_uri, reference_annotations, crop_image=None, z_s
     max_val = np.max(ref_array) - np.min(ref_array)
 
     # Run benchmarks
-    benchmark_results(t_output, t_binary_output,  input_array, t_reference, t_reference_binary, max_val)
+    scores = benchmark_results(t_output, t_binary_output,  input_array, t_reference, t_reference_binary, max_val)
 
     # Plot images
     if plot_images:
-        plot_images(dask_array, output_array, ref_array, binary_output, t_reference_binary, benchmark_channel)
+        show_images(dask_array, output_array, ref_array, binary_output, t_reference_binary, benchmark_channel)
+    
+    return scores
 
+def bulk_process(bmz_models, datasets):
 
+    # Call the main function with the test input
+    append_scores_models = []
+    for bmz_model in bmz_models:
+        append_scores_data = []
+        for dataset in datasets:
+            input_uri, ref_uri = datasets[dataset]
+            scores = process(
+                bmz_model=bmz_model,
+                ome_zarr_uri=input_uri,
+                reference_annotations=ref_uri,
+                plot_images=False,  # Disable plot for testing
+            )
+            id_array = [['Model '+ bmz_model, 'Model '+ bmz_model, 'Model '+ bmz_model, 'Model '+ bmz_model, 'Model '+ bmz_model],
+                        ['IoU', 'Dice', 'PSNR','RMSE','SSIM']]
+            index = pd.MultiIndex.from_arrays(id_array, names=('Model', 'Score'))
+            df = pd.DataFrame({'Dataset '+ dataset: scores}, index=index)
+            append_scores_data.append(df)
+        df1 =  pd.concat(append_scores_data, axis=1)  
+        append_scores_models.append(df1) 
+    df2 =  pd.concat(append_scores_models)   
+    return df2
 
 @click.command()
 @click.argument("bmz_model")
