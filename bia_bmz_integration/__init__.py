@@ -55,7 +55,6 @@ def reorder_array_dimensions(in_tensor, in_id):
 
     return array_tczxy 
 
-
 # Function to handle model inference
 def run_model_inference(bmz_model, arr):
     # load model
@@ -63,6 +62,10 @@ def run_model_inference(bmz_model, arr):
 
     if isinstance(model_resource, v0_5.ModelDescr):
         test_input_image = load_array(model_resource.inputs[0].test_tensor)
+        # match test data type with the data type of the model input
+
+        arr = arr.astype(test_input_image.dtype)
+
         # Reshape data to match model input dimensions
         # new_np_array = np.squeeze(arr).compute()
         indices = [i for i in range(len(test_input_image.shape)) if test_input_image.shape[i] == 1]
@@ -74,8 +77,12 @@ def run_model_inference(bmz_model, arr):
         outp_id = model_resource.outputs[0].id
         sample = Sample(members={inp_id: input_tensor}, stat={}, id="id")
 
+
     elif isinstance(model_resource, v0_4.ModelDescr):
         test_input_image = load_array(model_resource.test_inputs[0])
+
+        arr = arr.astype(test_input_image.dtype)
+
         #new_np_array = np.squeeze(arr).compute()
         indices = [i for i in range(len(test_input_image.shape)) if test_input_image.shape[i] == 1]
         right_dims = np.expand_dims(arr, indices)
@@ -90,39 +97,69 @@ def run_model_inference(bmz_model, arr):
         raise ValueError("This model specification version is not supported")
 
     prediction_pipeline = create_prediction_pipeline(model_resource)
-    prediction = prediction_pipeline.predict_sample_without_blocking(sample)
-
+    prediction = prediction_pipeline.predict_sample_without_blocking(sample) # works
+    #prediction = prediction_pipeline.predict_sample_with_blocking(sample) # doesn't always work. i.e. hiding-blowfish
+    '''
+    # debug create tiles
+    tile_shape = dict(
+        zip(
+            model_resource.inputs[0].axes,
+            np.asarray(model_resource.inputs[0].shape.min)
+            + np.asarray(model_resource.inputs[0].shape.step),
+        )
+    )
+    tile_with_id = {inp_id: tile_shape}
+    print(tile_shape)
+    print(tile_with_id)
+    print(sample.shape)
+    prediction = prediction_pipeline.predict_sample_with_fixed_blocking(sample,input_block_shape=tile_with_id)
+    '''
     return prediction, sample, inp_id, outp_id
 
 
-# Function to benchmark results
+# Functions to benchmark results
+def precision_recall_scores(pred_mask, groundtruth_mask):
+    true_positives = np.sum(pred_mask*groundtruth_mask)
+    true_false_postives = np.sum(pred_mask)
+    precision = np.mean(true_positives/true_false_postives)
+    #print(f"Precision score: {precision}")
+    total_pixel_truth = np.sum(groundtruth_mask)
+    recall = np.mean(true_positives/total_pixel_truth)
+    #print(f"Recall score: {recall}")
+    
+    scores = [round(precision, 3),round(recall, 3)
+]
+    return scores
 
 def benchmark_results(t_output, t_binary_output, t_input, t_reference, t_reference_binary, max_val):
     iou_metric = MeanIoU(include_background=True, reduction="mean")
     iou_score = iou_metric(y_pred=t_binary_output, y=t_reference_binary)
-    print(f"IoU score: {iou_score}")
+    iou_score = torch.IntTensor.item(iou_score)
+    #print(f"IoU score: {iou_score}")
 
     dice_metric = DiceMetric(include_background=True, reduction="mean")
     dice_score = dice_metric(y_pred=t_binary_output, y=t_reference_binary)
-    print(f"Dice score: {dice_score}")
+    dice_score = torch.IntTensor.item(dice_score)
+    #print(f"Dice score: {dice_score}")
 
     psnr_metric = PSNRMetric(max_val, reduction="mean", get_not_nans=False)
     psnr_score = psnr_metric(y_pred=t_output, y=t_reference)
-    print(f"PSNR score reconstructed image: {psnr_score}")
+    psnr_score = torch.IntTensor.item(psnr_score)
+    #print(f"PSNR score reconstructed image: {psnr_score}")
     
     rmse_metric = RMSEMetric(reduction="mean", get_not_nans=False)
     rmse_score = rmse_metric(y_pred=t_output, y=t_reference)
-    print(f"RMSE score reconstructed image: {rmse_score}")
+    rmse_score = torch.IntTensor.item(rmse_score)
+    #print(f"RMSE score reconstructed image: {rmse_score}")
 
     ssim_metric = SSIMMetric(spatial_dims=2, data_range=max_val)
     ssim_score = ssim_metric(y_pred=t_output[0, :, :, :, :], y=t_reference[0, :, :, :, :])
-    print(f"SSIM score reconstructed image: {ssim_score}")
+    ssim_score = torch.IntTensor.item(ssim_score)
+    #print(f"SSIM score reconstructed image: {ssim_score}")
 
     scores = [iou_score, dice_score, psnr_score,rmse_score,ssim_score]
 
     return scores
-
-
 
 # Function to plot the results
 def show_images(dask_array, output_array, ref_array, binary_output, ref_array_binary, benchmark_channel=0):
@@ -169,6 +206,7 @@ def process(bmz_model, ome_zarr_uri, reference_annotations, plot_images=True, cr
     if z_slices:
         dask_array = dask_array[:, :, z_slices[0]:z_slices[1], :, :]
         ref_array = ref_array[:, :, z_slices[0]:z_slices[1], :, :]
+
     if channel is not None:
         dask_array = dask_array[:, channel, :, :, :]
         ref_array = ref_array[:, channel, :, :, :]
@@ -182,7 +220,6 @@ def process(bmz_model, ome_zarr_uri, reference_annotations, plot_images=True, cr
 
     # Process results for benchmarking
     output_array = reorder_array_dimensions(prediction, outp_id)
-    print(output_array.shape)
     input_array = reorder_array_dimensions(sample, inp_id)
     correct_ch_output = np.take(output_array, [benchmark_channel], 1)
 
@@ -197,7 +234,9 @@ def process(bmz_model, ome_zarr_uri, reference_annotations, plot_images=True, cr
     max_val = np.max(ref_array) - np.min(ref_array)
 
     # Run benchmarks
-    scores = benchmark_results(t_output, t_binary_output,  input_array, t_reference, t_reference_binary, max_val)
+    p_r_scores = precision_recall_scores(binary_output, ref_array.astype(bool))
+    monai_scores = benchmark_results(t_output, t_binary_output,  input_array, t_reference, t_reference_binary, max_val)
+    scores = p_r_scores + monai_scores 
 
     # Plot images
     if plot_images:
@@ -205,7 +244,7 @@ def process(bmz_model, ome_zarr_uri, reference_annotations, plot_images=True, cr
     
     return scores
 
-def bulk_process(bmz_models, datasets):
+def bulk_process(bmz_models, datasets, z_planes=None):
 
     # Call the main function with the test input
     append_scores_models = []
@@ -218,9 +257,10 @@ def bulk_process(bmz_models, datasets):
                 ome_zarr_uri=input_uri,
                 reference_annotations=ref_uri,
                 plot_images=False,  # Disable plot for testing
+                z_slices=z_planes
             )
-            id_array = [['Model '+ bmz_model, 'Model '+ bmz_model, 'Model '+ bmz_model, 'Model '+ bmz_model, 'Model '+ bmz_model],
-                        ['IoU', 'Dice', 'PSNR','RMSE','SSIM']]
+            id_array = [['Model '+ bmz_model, 'Model '+ bmz_model,'Model '+ bmz_model, 'Model '+ bmz_model, 'Model '+ bmz_model, 'Model '+ bmz_model, 'Model '+ bmz_model],
+                        ['Precision','Recall','IoU', 'Dice', 'PSNR','RMSE','SSIM']]
             index = pd.MultiIndex.from_arrays(id_array, names=('Model', 'Score'))
             df = pd.DataFrame({'Dataset '+ dataset: scores}, index=index)
             append_scores_data.append(df)

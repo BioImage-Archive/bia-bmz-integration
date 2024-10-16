@@ -176,6 +176,7 @@ def main(bmz_model,ome_zarr_uri,plot_images,crop_image, z_slices,channel,t_slice
 
     # return output as numpy array
     output_array = np.asarray(prediction.members[outp_id].data)
+    print(output_array.shape)
     return(output_array)
 
 if __name__ == "__main__":
