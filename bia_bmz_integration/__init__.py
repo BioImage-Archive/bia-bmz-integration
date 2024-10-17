@@ -244,7 +244,7 @@ def process(bmz_model, ome_zarr_uri, reference_annotations, plot_images=True, cr
     
     return scores
 
-def bulk_process(bmz_models, datasets, z_planes=None):
+def bulk_process(bmz_models, datasets, z_planes=None, plot_images=True):
 
     # Call the main function with the test input
     append_scores_models = []
@@ -256,10 +256,10 @@ def bulk_process(bmz_models, datasets, z_planes=None):
                 bmz_model=bmz_model,
                 ome_zarr_uri=input_uri,
                 reference_annotations=ref_uri,
-                plot_images=False,  # Disable plot for testing
+                plot_images=plot_images,  
                 z_slices=z_planes
             )
-            id_array = [['Model '+ bmz_model, 'Model '+ bmz_model,'Model '+ bmz_model, 'Model '+ bmz_model, 'Model '+ bmz_model, 'Model '+ bmz_model, 'Model '+ bmz_model],
+            id_array = [['Model: '+ bmz_model, 'Model: '+ bmz_model,'Model: '+ bmz_model, 'Model: '+ bmz_model, 'Model: '+ bmz_model, 'Model: '+ bmz_model, 'Model: '+ bmz_model],
                         ['Precision','Recall','IoU', 'Dice', 'PSNR','RMSE','SSIM']]
             index = pd.MultiIndex.from_arrays(id_array, names=('Model', 'Score'))
             df = pd.DataFrame({'Dataset '+ dataset: scores}, index=index)
