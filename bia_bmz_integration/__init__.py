@@ -63,7 +63,6 @@ def run_model_inference(bmz_model, arr):
     if isinstance(model_resource, v0_5.ModelDescr):
         test_input_image = load_array(model_resource.inputs[0].test_tensor)
         # match test data type with the data type of the model input
-
         arr = arr.astype(test_input_image.dtype)
 
         # Reshape data to match model input dimensions
@@ -82,6 +81,7 @@ def run_model_inference(bmz_model, arr):
         test_input_image = load_array(model_resource.test_inputs[0])
 
         arr = arr.astype(test_input_image.dtype)
+        #arr = arr.astype('float')
 
         #new_np_array = np.squeeze(arr).compute()
         indices = [i for i in range(len(test_input_image.shape)) if test_input_image.shape[i] == 1]
@@ -216,6 +216,8 @@ def process(bmz_model, ome_zarr_uri, reference_annotations, plot_images=True, cr
 
     # Run model inference
     new_np_array = np.squeeze(dask_array).compute()
+    #debug invert image
+    #new_np_array=~new_np_array
     prediction, sample, inp_id, outp_id = run_model_inference(bmz_model, new_np_array)
 
     # Process results for benchmarking
@@ -240,11 +242,12 @@ def process(bmz_model, ome_zarr_uri, reference_annotations, plot_images=True, cr
 
     # Plot images
     if plot_images:
-        show_images(dask_array, output_array, ref_array, binary_output, t_reference_binary, benchmark_channel)
+        #show_images(dask_array, output_array, ref_array, binary_output, t_reference_binary, benchmark_channel)
+        show_images(input_array, output_array, ref_array, binary_output, t_reference_binary, benchmark_channel)
     
     return scores
 
-def bulk_process(bmz_models, datasets, z_planes=None, plot_images=True):
+def bulk_process(bmz_models, datasets, z_planes=None, crop_image=None, plot_images=True):
 
     # Call the main function with the test input
     append_scores_models = []
@@ -257,7 +260,8 @@ def bulk_process(bmz_models, datasets, z_planes=None, plot_images=True):
                 ome_zarr_uri=input_uri,
                 reference_annotations=ref_uri,
                 plot_images=plot_images,  
-                z_slices=z_planes
+                z_slices=z_planes,
+                crop_image=crop_image
             )
             id_array = [['Model: '+ bmz_model, 'Model: '+ bmz_model,'Model: '+ bmz_model, 'Model: '+ bmz_model, 'Model: '+ bmz_model, 'Model: '+ bmz_model, 'Model: '+ bmz_model],
                         ['Precision','Recall','IoU', 'Dice', 'PSNR','RMSE','SSIM']]
