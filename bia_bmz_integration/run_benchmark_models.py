@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import click
 import zarr
 import dask.array as da
 import bioimageio.core
@@ -152,8 +151,8 @@ def restoration_scores(t_output, t_reference, max_val):
 
     return scores
 
-# Function to plot the results
-def show_images(dask_array, output_array, ref_array, binary_output, ref_array_binary, benchmark_channel=0):
+# Functions to plot the results
+def show_images_gt(dask_array, output_array, ref_array, binary_output, ref_array_binary, benchmark_channel=0):
     correct_ch_output = np.take(output_array, [benchmark_channel], 1)
     
     plt.figure()
@@ -183,7 +182,61 @@ def show_images(dask_array, output_array, ref_array, binary_output, ref_array_bi
     plt.imshow(binary_output[0, 0, 0, :, :])
     plt.show()
 
-def process(bmz_model, ome_zarr_uri, reference_annotations, plot_images=True, crop_image=None, z_slices=None, channel=None, t_slices=None, benchmark_channel=0):
+def show_images(dask_array, output_array, binary_output, benchmark_channel=0):
+    correct_ch_output = np.take(output_array, [benchmark_channel], 1)
+    plt.figure()
+    ax1 = plt.subplot(1, 3, 1)
+    ax1.set_title("Input")
+    ax1.axis("off")
+    plt.imshow(dask_array[0, 0, 0, :, :])
+    
+    ax2 = plt.subplot(1, 3, 2)
+    ax2.set_title("Prediction")
+    ax2.axis("off")
+    plt.imshow(correct_ch_output[0, 0, 0, :, :])
+     
+    ax5 = plt.subplot(1, 3, 3)
+    ax5.set_title("Prediction binary")
+    ax5.axis("off")
+    plt.imshow(binary_output[0, 0, 0, :, :])
+    plt.show()
+
+def process_run(bmz_model, ome_zarr_uri, plot_images=True, crop_image=None, z_slices=None, channel=None, t_slices=None, benchmark_channel=0):
+    # Load image and annotations
+    dask_array = remote_zarr_to_model_input(ome_zarr_uri)
+
+    # Optional cropping
+    if crop_image:
+        dask_array = crop_center(dask_array, crop_image)
+
+    # Slices and channel selection
+    if z_slices:
+        dask_array = dask_array[:, :, z_slices[0]:z_slices[1], :, :]
+
+    if channel is not None:
+        dask_array = dask_array[:, channel, :, :, :]
+
+    if t_slices:
+        dask_array = dask_array[t_slices[0]:t_slices[1], :, :, :, :]
+
+    # Run model inference
+    new_np_array = np.squeeze(dask_array).compute()
+    prediction, sample, inp_id, outp_id = run_model_inference(bmz_model, new_np_array)
+
+    # Process results for benchmarking
+    output_array = reorder_array_dimensions(prediction, outp_id)
+    correct_ch_output = np.take(output_array, [benchmark_channel], 1)
+    input_array = reorder_array_dimensions(sample, inp_id)
+    binary_output = correct_ch_output >= 0.5
+
+
+    # Plot images
+    if plot_images:
+        #show_images(dask_array, output_array, ref_array, binary_output, t_reference_binary, benchmark_channel)
+        show_images(input_array, output_array, binary_output, benchmark_channel)
+    
+
+def process_benchmark(bmz_model, ome_zarr_uri, reference_annotations, plot_images=True, crop_image=None, z_slices=None, channel=None, t_slices=None, benchmark_channel=0):
     # Load image and annotations
     dask_array = remote_zarr_to_model_input(ome_zarr_uri)
     ref_array = remote_zarr_to_model_input(reference_annotations)
@@ -239,7 +292,7 @@ def process(bmz_model, ome_zarr_uri, reference_annotations, plot_images=True, cr
     # Plot images
     if plot_images:
         #show_images(dask_array, output_array, ref_array, binary_output, t_reference_binary, benchmark_channel)
-        show_images(input_array, output_array, ref_array, binary_output, t_reference_binary, benchmark_channel)
+        show_images_gt(input_array, output_array, ref_array, binary_output, t_reference_binary, benchmark_channel)
     
     return scores
 
@@ -251,7 +304,7 @@ def bulk_process(bmz_models, datasets, z_planes=None, crop_image=None, plot_imag
         append_scores_data = []
         for dataset in datasets:
             input_uri, ref_uri = datasets[dataset]
-            scores = process(
+            scores = process_benchmark(
                 bmz_model=bmz_model,
                 ome_zarr_uri=input_uri,
                 reference_annotations=ref_uri,
@@ -271,25 +324,3 @@ def bulk_process(bmz_models, datasets, z_planes=None, crop_image=None, plot_imag
         append_scores_models.append(df1) 
     df2 =  pd.concat(append_scores_models)   
     return df2
-
-@click.command()
-@click.argument("bmz_model")
-@click.argument("ome_zarr_uri")
-@click.argument("reference_annotations")
-@click.option("-c", "--crop_image", nargs=2, type= int,
-              help="crop the input image to obtain an image with the size specified. First value is x second is y]")
-@click.option("-z", "--z_slices", nargs=2, type= int,
-              help="select a range of z planes from the input image")
-@click.option("-ch", "--channel", type= int,
-              help="select a channel from the input image")
-@click.option("-t", "--t_slices", nargs=2, type= int,
-              help="select a range of time points from the input image")
-@click.option("-p", "--plot_images", default=True,
-              help="show input and output images; defaults to showing the images")
-@click.option("-b_ch", "--benchmark_channel", type= int, default=0,
-              help="select a channel to benchmark from the prediction")
-def main(bmz_model,ome_zarr_uri,reference_annotations,plot_images,crop_image, z_slices,channel,t_slices, benchmark_channel):
-   return process(bmz_model,ome_zarr_uri,reference_annotations,plot_images,crop_image, z_slices,channel,t_slices, benchmark_channel)
-
-if __name__ == "__main__":
-    main()
