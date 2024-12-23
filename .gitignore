@@ -1,2 +1,17 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# poetry 
+poetry.lock
+
+# DS_Store
+.DS_Store
+notebooks/.DS_Store
+scripts/.DS_Store
+
+# env
 env
 .venv
