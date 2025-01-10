@@ -6,7 +6,7 @@
 
 After cloning, from the top level of this repository, create the conda environment like so:
 
-    conda env create -f env.yaml -p ./env
+    conda env create -f env.yaml
 
 and this'll also install bia_bmz_integrator. Activate the environment thus:
 
@@ -24,7 +24,7 @@ To build the docker image, from the top level of this repository (note the perio
 
     docker build -t bia-bmz-integration . 
 
-and start an interative terminal in a container:
+and start an interactive terminal in a container:
 
     docker run -it bia-bmz-integration
 
