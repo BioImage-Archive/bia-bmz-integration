@@ -14,7 +14,7 @@ COPY ./bia_bmz_integrator /BIA-BMZ/bia_bmz_integrator
 # Conda env and conda-pack / -unpack
 RUN conda env create -f /BIA-BMZ/env.yaml && \
     conda install -c conda-forge --override-channels conda-pack && \
-    conda-pack -n bia-bmz-integration-test -o /tmp/env.tar && \
+    conda-pack -n bia-bmz-integration -o /tmp/env.tar && \
     mkdir /bia-bmz-integration && cd /bia-bmz-integration && tar xf /tmp/env.tar && \
     rm /tmp/env.tar && \
     /bia-bmz-integration/bin/conda-unpack && \

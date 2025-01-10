@@ -16,5 +16,9 @@ scripts/.DS_Store
 env
 .venv
 
+# build things
+build/
+bia_bmz_integrator.egg-info/
+
 # vs code
 .vscode
