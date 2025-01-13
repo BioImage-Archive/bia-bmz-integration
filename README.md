@@ -16,7 +16,7 @@ and once the environment is activated, to run a model on an image, or to get ben
 
     bia_bmz_benchmark --help
 
-See *bia_bmz_benchmark*, further below, for more details.
+see *bia_bmz_benchmark*, further below, for more details.
 
 ## Running in a container
 
@@ -32,7 +32,41 @@ and you should find yourself within the bia-bmz-integration virtual environment,
 
     bia_bmz_benchmark --help
 
-See *bia_bmz_benchmark*, directly below, for more details.
+see *bia_bmz_benchmark*, directly below, for more details.
+
+## Running with Singularity on a cluster
+
+Once you've built the Docker image (see above), you can save it:
+
+    docker save -o bia-bmz-integration.tar bia-bmz-integration:latest
+
+and, once you've got the resulting .tar file on to a cluster, you can start an interactive session to build a Singularity .sif from it. For example, assuming you're in the same folder as the Docker .tar file:
+
+    salloc --mem=8g --time=00:30:00
+    module load singularityce
+    singularity build bia-bmz-integration.sif docker-archive://bia-bmz-integration.tar
+
+and again, you can use an interactive session to run a container, for example:
+
+    salloc --mem=32g --time=00:30:00
+    module load singularityce
+    singularity shell bia-bmz-integration.sif
+
+and you'll find yourself in the container shell. 
+
+Note that you cannot use `singularity run` at time of writing — the way Singularity loads the container means that the last line of the Dockerfile, `CMD ["/bin/bash", "-c", "source bia-bmz-integration/bin/activate && exec bash"]`, which activates the python environment, throws an error — Singularity won't find bia-bmz-integration/bin/activate.
+
+Instead, once inside the container shell as above, first go to the root of the container, then bia-bmz-integration, and execute the environment activation from there:
+
+    cd / 
+    cd bia-bmz-integration
+    source ./bin/activate
+
+then, as above, to run a model on an image, or to get benchmarking metrics for the model, run `bia_bmz_benchmark`. For example, view parameters with --help: to  you can run:
+
+    bia_bmz_benchmark --help
+
+see *bia_bmz_benchmark*, directly below, for more details.
 
 ## bia_bmz_benchmark
 
