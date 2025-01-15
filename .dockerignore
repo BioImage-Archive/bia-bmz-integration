@@ -1,0 +1,9 @@
+.git/
+.gitignore
+.vscode/
+notebooks/
+build/
+bia_bmz_integrator.egg-info/
+bia-bia-integration.tar
+dockerfile_spares
+

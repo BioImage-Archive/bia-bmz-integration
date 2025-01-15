@@ -19,6 +19,7 @@ env
 # build things
 build/
 bia_bmz_integrator.egg-info/
+bia-bia-integration.tar
 
 # vs code
 .vscode
