@@ -28,11 +28,11 @@ and start an interactive terminal in a container:
 
     docker run -it bia-bmz-integration
 
-and you should find yourself within the bia-bmz-integration virtual environment, inside the container. Thus, as above, to run a model on an image, or to get benchmarking metrics for the model, run `bia_bmz_benchmark`. For example, view parameters with --help: to  you can run:
+and you should find yourself within the bia-bmz-integration virtual environment, inside the container. Thus, as above, to run a model on an image, or to get benchmarking metrics for the model, run `bia_bmz_benchmark`. For example, to view parameters with --help, you can run:
 
     bia_bmz_benchmark --help
 
-see *bia_bmz_benchmark*, directly below, for more details.
+see *bia_bmz_benchmark*, further below, for more details.
 
 ## Running with Singularity on a cluster
 
@@ -54,7 +54,7 @@ and again, you can use an interactive session to run a container, for example:
 
 and you'll find yourself in the container shell. 
 
-Note that you cannot use `singularity run` at time of writing — the way Singularity loads the container means that the last line of the Dockerfile, `CMD ["/bin/bash", "-c", "source bia-bmz-integration/bin/activate && exec bash"]`, which activates the python environment, throws an error — Singularity won't find bia-bmz-integration/bin/activate.
+Best not to use `singularity run` at time of writing — the way Singularity loads the container means that the last line of the Dockerfile, `CMD ["/bin/bash", "-c", "source bia-bmz-integration/bin/activate && exec bash"]`, which activates the python environment, throws an error — Singularity won't find bia-bmz-integration/bin/activate.
 
 Instead, once inside the container shell as above, first go to the root of the container, then bia-bmz-integration, and execute the environment activation from there:
 
@@ -70,9 +70,9 @@ see *bia_bmz_benchmark*, directly below, for more details.
 
 ## bia_bmz_benchmark
 
-Script for running from the BMZ on data from the BIA. This script will also provide benchmarking if a reference annotation for an image is provided.
+Script for running models from the BMZ on data from the BIA. This script will also provide benchmarking if a reference annotation for an image is provided.
 
-The commands below apply, whether in an interactive shell inside a container, or running locally on your machine.
+The commands below apply whether in an interactive shell inside a container (including on a cluster), or running locally on your machine.
 
 To analyse a remote OME-Zarr image using a BMZ model:
 

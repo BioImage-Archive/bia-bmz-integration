@@ -16,6 +16,9 @@ rm /tmp/env.tar
 # now unpack the environment and tidy up
 /bia-bmz-integration/bin/conda-unpack
 find /bia-bmz-integration -type f -name '*.a' -delete
+find /bia-bmz-integration -name '*.pyc' -delete
+find /bia-bmz-integration -name '__pycache__' -delete
+rm -rf /bia-bmz-integration/share/doc
 rm -rf /bia-bmz-integration/pkgs
 conda clean -afy
 rm -rf /opt/conda/pkgs
