@@ -15,3 +15,11 @@ scripts/.DS_Store
 # env
 env
 .venv
+
+# build things
+build/
+bia_bmz_integrator.egg-info/
+bia-bmz-integration.tar
+
+# vs code
+.vscode

@@ -1,24 +1,38 @@
-[tool.poetry]
-name = "bia-bmz-integration"
-version = "0.1.0"
-description = ""
-authors = ["Craig Russell <ctr26@ebi.ac.uk>"]
-readme = "README.md"
-include = ["src"]
-
-[tool.poetry.dependencies]
-python = "^3.9"
-zarr = "^2.18.2"
-dask = "^2024.7.1"
-napari = "^0.5.1"
-imageio = "^2.34.2"
-bioimageio-core = {extras = ["onnx", "pytorch"], version = "^0.6.8"}
-tensorflow = "^2.16.0"
-jupyter = "^1.0.0"
-ipykernel = "^6.29.5"
-torch = "^2.2.0"
-
-
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools >= 61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bia_bmz_integrator"
+version = "0.1.0"
+description = "Integration of BioImage Archive and BioImage Model Zoo."
+readme = "README.md"
+license = { text = "" }
+authors = [
+    {name = "Teresa Zulueta Coarasa"},
+    {name = "Craig Russell"}, 
+    {name = "Christopher Rookyard"},
+]
+requires-python = ">=3.10"
+dependencies = [
+    "bioimageio-core", 
+    "bioimageio-spec", 
+    "click", 
+    "dask", 
+    "matplotlib", 
+    "monai", 
+    "numpy", 
+    "opencv-python", 
+    "pandas", 
+    "requests",
+    "torch", 
+    "torchvision", 
+    "zarr",  
+]
+
+[tool.setuptools]
+packages = ["bia_bmz_integrator", "bia_bmz_integrator.scripts"]
+include-package-data = true
+
+[project.scripts]
+bia_bmz_benchmark = "bia_bmz_integrator.scripts.run_benchmark_bmz_on_bia_data:cli"
