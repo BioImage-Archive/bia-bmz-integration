@@ -18,6 +18,18 @@ and once the environment is activated, to run a model on an image, or to get ben
 
 see *bia_bmz_benchmark*, further below, for more details.
 
+## Running for development, in a local conda environment
+
+If you'll want to make changes to the code and have them take effect immediately, install the bia_bmz_integrator package in editable mode. A distinct conda environment exists for this, and if you're running from the top level of this repository, create it like so: 
+
+    conda env create -f ./dev/env.yaml 
+
+and you can activate it like this:
+
+    conda activate bia-bmz-integration
+
+then your changes to any bia_bmz_integrator code will work straight away. 
+
 ## Running in a container
 
 To build the docker image, from the top level of this repository (note the period):
