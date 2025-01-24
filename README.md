@@ -26,7 +26,7 @@ If you'll want to make changes to the code and have them take effect immediately
 
 and you can activate it like this:
 
-    conda activate bia-bmz-integration
+    conda activate bia-bmz-integration-dev
 
 then your changes to any bia_bmz_integrator code will work straight away. 
 
