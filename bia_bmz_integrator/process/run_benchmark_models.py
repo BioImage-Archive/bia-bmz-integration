@@ -201,7 +201,17 @@ def show_images(dask_array, output_array, binary_output, benchmark_channel=0):
     plt.imshow(binary_output[0, 0, 0, :, :])
     plt.show()
 
-def process_run(bmz_model, ome_zarr_uri, plot_images=True, crop_image=None, z_slices=None, channel=None, t_slices=None, benchmark_channel=0):
+def process_run(
+    bmz_model, 
+    ome_zarr_uri, 
+    plot_images=True, 
+    crop_image=None, 
+    z_slices=None, 
+    channel=None, 
+    t_slices=None, 
+    benchmark_channel=0
+) -> dict:
+    
     # Load image and annotations
     dask_array = remote_zarr_to_model_input(ome_zarr_uri)
 
@@ -229,14 +239,29 @@ def process_run(bmz_model, ome_zarr_uri, plot_images=True, crop_image=None, z_sl
     input_array = reorder_array_dimensions(sample, inp_id)
     binary_output = correct_ch_output >= 0.5
 
-
     # Plot images
     if plot_images:
         #show_images(dask_array, output_array, ref_array, binary_output, t_reference_binary, benchmark_channel)
         show_images(input_array, output_array, binary_output, benchmark_channel)
     
+    output = {}
+    output["prediction"] = correct_ch_output
 
-def process_benchmark(bmz_model, ome_zarr_uri, reference_annotations, plot_images=True, crop_image=None, z_slices=None, channel=None, t_slices=None, benchmark_channel=0):
+    return output
+    
+
+def process_benchmark(
+    bmz_model, 
+    ome_zarr_uri, 
+    reference_annotations, 
+    plot_images=True, 
+    crop_image=None, 
+    z_slices=None, 
+    channel=None, 
+    t_slices=None, 
+    benchmark_channel=0
+) -> dict:
+    
     # Load image and annotations
     dask_array = remote_zarr_to_model_input(ome_zarr_uri)
     ref_array = remote_zarr_to_model_input(reference_annotations)
@@ -284,7 +309,6 @@ def process_benchmark(bmz_model, ome_zarr_uri, reference_annotations, plot_image
     max_val = np.max(ref_array) - np.min(ref_array)
 
     # Run benchmarks
-
     seg_scores = segmentation_scores(binary_output, ref_array.astype(bool), t_binary_output, t_reference_binary)  
     res_scores = restoration_scores(t_output, t_reference, max_val)
     scores = seg_scores + res_scores 
@@ -294,7 +318,11 @@ def process_benchmark(bmz_model, ome_zarr_uri, reference_annotations, plot_image
         #show_images(dask_array, output_array, ref_array, binary_output, t_reference_binary, benchmark_channel)
         show_images_gt(input_array, output_array, ref_array, binary_output, t_reference_binary, benchmark_channel)
     
-    return scores
+    output = {}
+    output["scores"] = scores
+    output["prediction"] = correct_ch_output
+
+    return output
 
 def bulk_process(bmz_models, datasets, z_planes=None, crop_image=None, plot_images=True, channel=None, t_slices=None, benchmark_channel=0):
 
