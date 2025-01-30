@@ -31,8 +31,9 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["bia_bmz_integrator", "bia_bmz_integrator.scripts"]
+packages = ["bia_bmz_integrator", "bia_bmz_integrator.models", "bia_bmz_integrator.process", "bia_bmz_integrator.scripts"]
 include-package-data = true
 
 [project.scripts]
 bia_bmz_benchmark = "bia_bmz_integrator.scripts.run_benchmark_bmz_on_bia_data:cli"
+amalgamate_jsons = "bia_bmz_integrator.scripts.amalgamate_jsons:amalgamate_jsons"

@@ -1,0 +1,2 @@
+"noisy-fish" "https://uk1s3.embassy.ebi.ac.uk/bia-zarr-test/1135_n_H2BtdTomato.ome.zarr/0" "https://uk1s3.embassy.ebi.ac.uk/bia-zarr-test/1135_n_stain_StarDist_goldGT_180_rotation.ome.zarr/0" -acc S-BIAD1026 -uuid 1101b735-b5cc-414d-88de-dd5eb89f3cb4 -z 170 180 -p False
+"loyal-squid" "https://uk1s3.embassy.ebi.ac.uk/bia-zarr-test/1135_n_H2BtdTomato.ome.zarr/0" "https://uk1s3.embassy.ebi.ac.uk/bia-zarr-test/1135_n_stain_StarDist_goldGT_180_rotation.ome.zarr/0" -acc S-BIAD1026 -uuid 1101b735-b5cc-414d-88de-dd5eb89f3cb4 -z 170 180 -p False
