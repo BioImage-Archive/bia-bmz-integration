@@ -9,7 +9,6 @@ script_2="amalgamate_jsons"
 
 # Loop through each line of the input file
 while IFS= read -r line; do
-    echo "running:" "$script_1" "$line"
     eval "$script_1" "$line"
 done < "$input_file"
 

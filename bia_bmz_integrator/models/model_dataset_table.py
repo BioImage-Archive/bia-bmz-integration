@@ -14,6 +14,7 @@ class ModelDatasetTable:
     model: str
     study: str
     dataset_uuid: str
+    annotation_data_set_uuid: str
     example_image: str
     example_process_image: str
     analysis_parameters: AnalysisParameters

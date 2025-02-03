@@ -1,6 +1,8 @@
 import click
 import json
 import os
+from rich.console import Console
+from rich.table import Table
 import matplotlib.pyplot as plt
 from dataclasses import asdict
 from bia_bmz_integrator.process.run_benchmark_models import process_benchmark, process_run
@@ -25,6 +27,8 @@ from bia_bmz_integrator.models.model_dataset_table import AnalysisParameters, Mo
               help="the accession for the study")
 @click.option("-uuid", "--dataset_uuid", type=str, default="unspecified", 
               help="the uuid of the dataset with which the image is associated")
+@click.option("-ann_uuid", "--annotation_dataset_uuid", type=str, default="unspecified", 
+              help="the uuid of the annotation dataset with which the image is associated")
 @click.option("-p", "--plot_images", default=True,
               help="show input and output images; defaults to showing the images")
 
@@ -40,22 +44,23 @@ def cli(
    benchmark_channel, 
    study_acc, 
    dataset_uuid, 
+   annotation_dataset_uuid, 
    plot_images
 ):
    
-   click.echo(
-      "processing: \n"
-      f"study_acc: {study_acc} \n"
-      f"dataset_uuid: {dataset_uuid} \n"
-      f"bmz model: {bmz_model} \n"
-      f"ome zarr uri: {ome_zarr_uri} \n"
-      f"reference annotations: {reference_annotations} \n"
-      f"with cropping: {crop_image} \n"
-      f"for z slices: {z_slices} \n"
-      f"for channel: {channel} \n"
-      f"for t slices: {t_slices} \n"
-      f"with benchmark channel: {benchmark_channel} \n"
-      f"and {plot_images} for plotting."
+   print_update(
+      study_acc, 
+      dataset_uuid, 
+      bmz_model, 
+      ome_zarr_uri, 
+      reference_annotations, 
+      annotation_dataset_uuid, 
+      crop_image, 
+      z_slices, 
+      channel, 
+      t_slices, 
+      benchmark_channel, 
+      plot_images 
    )
 
    if reference_annotations:
@@ -71,7 +76,6 @@ def cli(
          t_slices, 
          benchmark_channel
       )
-      scores = result["scores"]
       
    else:
       
@@ -85,7 +89,6 @@ def cli(
          t_slices, 
          benchmark_channel
       )
-      scores = None
    
    result_table = make_model_dataset_table(
       bmz_model, 
@@ -96,11 +99,12 @@ def cli(
       benchmark_channel, 
       study_acc, 
       dataset_uuid, 
-      scores  
+      annotation_dataset_uuid, 
+      result["scores"]  
    )
    
-   save_result(result_table, study_acc, dataset_uuid, bmz_model)
-   save_prediction_image(result["prediction"], study_acc, dataset_uuid, bmz_model)
+   save_result(result_table, study_acc, dataset_uuid, annotation_dataset_uuid, bmz_model)
+   save_images(result, result_table)
 
 
 def make_model_dataset_table(
@@ -112,7 +116,8 @@ def make_model_dataset_table(
    benchmark_channel, 
    study_acc, 
    dataset_uuid, 
-   scores
+   annotation_dataset_uuid, 
+   scores, 
 ) -> ModelDatasetTable:
    
    analysis_parameters = AnalysisParameters()
@@ -126,16 +131,16 @@ def make_model_dataset_table(
       analysis_parameters.t_slices_analysed = t_slices
    if benchmark_channel:
       analysis_parameters.prediction_channel_benchmarked = benchmark_channel
-   
+
    image_filename = (
-      "/bioimage-archive/ai-benchmarking-galleries/example-images/" +
+      "/public/ai-galleries/example-images/" +
       "example_image_" + 
       study_acc + "_" + 
       dataset_uuid + 
       ".png"
    )
    prediction_filename = (
-      "/bioimage-archive/ai-benchmarking-galleries/example-images/" + 
+      "/public/ai-galleries/example-images/" + 
       "prediction_image_" +
       study_acc + "_" + 
       dataset_uuid + "_" + 
@@ -147,6 +152,7 @@ def make_model_dataset_table(
       model=bmz_model,
       study=study_acc,
       dataset_uuid=dataset_uuid,
+      annotation_data_set_uuid=annotation_dataset_uuid, 
       example_image=image_filename, 
       example_process_image=prediction_filename, 
       analysis_parameters=analysis_parameters
@@ -154,10 +160,10 @@ def make_model_dataset_table(
 
    if scores:
       ground_truth_filename = (
-         "/bioimage-archive/ai-benchmarking-galleries/example-images/" +
+         "/public/ai-galleries/example-images/" +
          "ground_truth_" + 
          study_acc + "_" + 
-         dataset_uuid + 
+         annotation_dataset_uuid + 
          ".png"
       )
       result.example_ground_truth=ground_truth_filename
@@ -173,6 +179,7 @@ def save_result(
       result, 
       study_acc, 
       dataset_uuid, 
+      annotation_dataset_uuid, 
       bmz_model 
 ):
    
@@ -185,6 +192,7 @@ def save_result(
       "/result_" + 
       study_acc + "_" + 
       dataset_uuid + "_" + 
+      annotation_dataset_uuid + "_" +
       bmz_model + 
       ".json"
    )
@@ -192,26 +200,79 @@ def save_result(
       json.dump(results_list, f, indent=4)
 
 
-def save_prediction_image(
-   prediction, 
-   study_acc, 
-   dataset_uuid, 
-   bmz_model
+def save_images(
+   result, 
+   result_table, 
 ):
    
-   output_dir = "./results/prediction_images"
+   input_image = result["input_image"]
+   prediction_image = result["prediction_image"]
+   ground_truth_image = result["ground_truth_image"]
+
+   # saving central slice of each image
+   shape = input_image.shape
+   centre_indices = tuple(s // 2 for s in shape[:3])
+   
+   input_output = input_image[centre_indices[0], centre_indices[1], centre_indices[2], :, :]
+   prediction_output = prediction_image[centre_indices[0], centre_indices[1], centre_indices[2], :, :]
+   
+   input_filename = os.path.basename(result_table.example_image)
+   prediction_filename = os.path.basename(result_table.example_process_image)
+
+   output_dir = "./results/images/"
    os.makedirs(output_dir, exist_ok=True)
 
-   # saving central slice of image
-   shape = prediction.shape
-   centre_indices = tuple(s // 2 for s in shape[:3])
-   centre_slice = prediction[centre_indices[0], centre_indices[1], centre_indices[2], :, :]
-   image_filename = (
-      output_dir + 
-      "/prediction_image_" +
-      study_acc + "_" + 
-      dataset_uuid + "_" + 
-      bmz_model + 
-      ".png"
+   plt.imsave(output_dir + input_filename, input_output, cmap="gray")
+   plt.imsave(output_dir + prediction_filename, prediction_output, cmap="gray")
+   
+   if ground_truth_image is not None:
+      ground_truth_output = ground_truth_image[centre_indices[0], centre_indices[1], centre_indices[2], :, :]
+      ground_truth_filename = os.path.basename(result_table.example_ground_truth)
+      plt.imsave(output_dir + ground_truth_filename, ground_truth_output, cmap="gray")
+
+
+def print_update(
+   study_acc, 
+   dataset_uuid, 
+   bmz_model, 
+   ome_zarr_uri, 
+   reference_annotations, 
+   annotation_dataset_uuid, 
+   crop_image, 
+   z_slices, 
+   channel, 
+   t_slices, 
+   benchmark_channel, 
+   plot_images 
+):
+
+   console = Console()
+
+   console.print(
+      f"[bold green]running:[/] bia_bmz_benchmark [cyan]\"{bmz_model}\"[/] "
+      f"[blue]\"{ome_zarr_uri}\"[/] "
+      f"[blue]\"{reference_annotations}\"[/] "
+      f"-acc [yellow]{study_acc}[/] -uuid [yellow]{dataset_uuid}[/] "
+      f"-z {z_slices[0]} {z_slices[1]} -p {plot_images}\n"
    )
-   plt.imsave(image_filename, centre_slice, cmap="gray")
+
+   table = Table(title="[bold magenta]Processing Details[/]")
+
+   table.add_column("Parameter", style="cyan", justify="right")
+   table.add_column("Value", style="yellow")
+
+   table.add_row("study_acc", study_acc)
+   table.add_row("dataset_uuid", dataset_uuid)
+   table.add_row("bmz model", bmz_model)
+   table.add_row("ome zarr uri", f"[blue]{ome_zarr_uri}[/]")
+   table.add_row("reference annotations", f"[blue]{reference_annotations}[/]")
+   table.add_row("annotation dataset uuid", annotation_dataset_uuid or "unspecified")
+   table.add_row("with cropping", str(crop_image) if crop_image else "None")
+   table.add_row("for z slices", str(z_slices))
+   table.add_row("for channel", str(channel) if channel is not None else "None")
+   table.add_row("for t slices", str(t_slices) if t_slices is not None else "None")
+   table.add_row("with benchmark channel", str(benchmark_channel))
+   table.add_row("and plotting", str(plot_images))
+
+   console.print(table)
+

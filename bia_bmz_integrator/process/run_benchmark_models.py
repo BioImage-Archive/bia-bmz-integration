@@ -245,7 +245,10 @@ def process_run(
         show_images(input_array, output_array, binary_output, benchmark_channel)
     
     output = {}
-    output["prediction"] = correct_ch_output
+    output["scores"] = None
+    output["input_image"] = input_array
+    output["prediction_image"] = correct_ch_output
+    output["ground_truth_image"] = None
 
     return output
     
@@ -320,7 +323,9 @@ def process_benchmark(
     
     output = {}
     output["scores"] = scores
-    output["prediction"] = correct_ch_output
+    output["input_image"] = input_array
+    output["prediction_image"] = correct_ch_output
+    output["ground_truth_image"] = ref_array
 
     return output
 
