@@ -248,31 +248,23 @@ def print_update(
 
    console = Console()
 
-   console.print(
-      f"[bold green]running:[/] bia_bmz_benchmark [cyan]\"{bmz_model}\"[/] "
-      f"[blue]\"{ome_zarr_uri}\"[/] "
-      f"[blue]\"{reference_annotations}\"[/] "
-      f"-acc [yellow]{study_acc}[/] -uuid [yellow]{dataset_uuid}[/] "
-      f"-z {z_slices[0]} {z_slices[1]} -p {plot_images}\n"
-   )
-
    table = Table(title="[bold magenta]Processing Details[/]")
 
    table.add_column("Parameter", style="cyan", justify="right")
    table.add_column("Value", style="yellow")
 
-   table.add_row("study_acc", study_acc)
-   table.add_row("dataset_uuid", dataset_uuid)
-   table.add_row("bmz model", bmz_model)
+   table.add_row("study_acc", f"[magenta]{study_acc}[/]")
+   table.add_row("dataset_uuid", f"[magenta]{dataset_uuid}[/]")
+   table.add_row("bmz model", f"[cyan]{bmz_model}[/]")
    table.add_row("ome zarr uri", f"[blue]{ome_zarr_uri}[/]")
    table.add_row("reference annotations", f"[blue]{reference_annotations}[/]")
-   table.add_row("annotation dataset uuid", annotation_dataset_uuid or "unspecified")
-   table.add_row("with cropping", str(crop_image) if crop_image else "None")
-   table.add_row("for z slices", str(z_slices))
-   table.add_row("for channel", str(channel) if channel is not None else "None")
-   table.add_row("for t slices", str(t_slices) if t_slices is not None else "None")
-   table.add_row("with benchmark channel", str(benchmark_channel))
-   table.add_row("and plotting", str(plot_images))
+   table.add_row("annotation dataset uuid", f"[magenta]{annotation_dataset_uuid}[/]")
+   table.add_row("cropping", str(crop_image) if crop_image is not None else "None")
+   table.add_row("z slices", str(z_slices) if z_slices is not None else "None")
+   table.add_row("channel", str(channel) if channel is not None else "None")
+   table.add_row("t slices", str(t_slices) if t_slices is not None else "None")
+   table.add_row("benchmark channel", str(benchmark_channel) if benchmark_channel is not None else "None")
+   table.add_row("plotting", str(plot_images))
 
    console.print(table)
 
