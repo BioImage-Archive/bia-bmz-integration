@@ -7,7 +7,7 @@ class AnalysisParameters:
     xy_image_crop_size: list=None
     input_channel_analysed: int=None
     t_slices_analysed: list=None
-    prediction_channel_benchmarked: int=None
+    prediction_channel: int=None
 
 @dataclass
 class ModelDatasetTable:
