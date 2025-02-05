@@ -1,5 +1,5 @@
 import click
-from bia_bmz_integrator.run_benchmark_models import process_run
+from bia_bmz_integrator.process.run_benchmark_models import process_run
    
 
 @click.command()

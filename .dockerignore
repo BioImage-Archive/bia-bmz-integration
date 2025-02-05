@@ -4,6 +4,5 @@
 notebooks/
 build/
 bia_bmz_integrator.egg-info/
-bia-bia-integration.tar
+bia-bmz-integration.tar
 dockerfile_spares
-
