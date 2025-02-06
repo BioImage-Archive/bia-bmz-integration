@@ -222,9 +222,12 @@ def process_run(
     # Slices and channel selection
     if z_slices:
         dask_array = dask_array[:, :, z_slices[0]:z_slices[1], :, :]
+        if dask_array.ndim < 5:
+            dask_array = np.expand_dims(dask_array, 2)
 
     if channel is not None:
         dask_array = dask_array[:, channel, :, :, :]
+        dask_array = np.expand_dims(dask_array, 1)
 
     if t_slices:
         dask_array = dask_array[t_slices[0]:t_slices[1], :, :, :, :]
