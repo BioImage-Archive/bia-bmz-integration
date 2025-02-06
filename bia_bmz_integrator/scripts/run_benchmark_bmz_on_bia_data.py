@@ -18,7 +18,7 @@ from bia_bmz_integrator.data_models.model_dataset_table import AnalysisParameter
               help="crop the input image to obtain an image with the size specified. First value is x second is y]")
 @click.option("-z", "--z_slices", nargs=2, type= int, default=None, 
               help="select a range of z planes from the input image")
-@click.option("-ch", "--channel", type= int, default=0, 
+@click.option("-ch", "--channel", type= int, default=None, 
               help="select a channel from the input image")
 @click.option("-t", "--t_slices", nargs=2, type= int, default=None, 
               help="select a range of time points from the input image")
