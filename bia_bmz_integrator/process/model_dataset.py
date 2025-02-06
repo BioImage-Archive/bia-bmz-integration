@@ -10,6 +10,23 @@ def make_model_dataset_table(
    analysis_parameters, 
 ) -> ModelDatasetTable:
 
+   result = ModelDatasetTable(
+      model = bmz_model,
+      study = study_acc,
+      dataset_uuid = dataset_uuid,
+      annotation_data_set_uuid = annotation_dataset_uuid, 
+      analysis_parameters = analysis_parameters
+   )
+
+   # None values as default for these are useful for the result, 
+   # but need to be a string for filenames, and may as well be something other than none 
+   if study_acc is None:
+      study_acc = "unspecified"
+   if dataset_uuid is None:
+      dataset_uuid = "unspecified"
+   if annotation_dataset_uuid is None:
+      annotation_dataset_uuid = "unspecified"
+
    image_filename = (
       "/public/ai-galleries/example-images/" +
       "example_image_" + 
@@ -26,16 +43,9 @@ def make_model_dataset_table(
       ".png"
    )
 
-   result = ModelDatasetTable(
-      model = bmz_model,
-      study = study_acc,
-      dataset_uuid = dataset_uuid,
-      annotation_data_set_uuid = annotation_dataset_uuid, 
-      example_image = image_filename, 
-      example_process_image = prediction_filename, 
-      analysis_parameters = analysis_parameters
-   )
-
+   result.example_image = image_filename
+   result.example_process_image = prediction_filename
+   
    if scores:
       ground_truth_filename = (
          "/public/ai-galleries/example-images/" +

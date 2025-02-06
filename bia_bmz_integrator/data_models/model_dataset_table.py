@@ -15,9 +15,9 @@ class ModelDatasetTable:
     study: str
     dataset_uuid: str
     annotation_data_set_uuid: str
-    example_image: str
-    example_process_image: str
     analysis_parameters: AnalysisParameters
+    example_image: str=None
+    example_process_image: str=None
     example_ground_truth: str=None
     precision: float=None
     recall: float=None

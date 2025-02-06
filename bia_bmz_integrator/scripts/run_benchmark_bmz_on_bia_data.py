@@ -24,11 +24,11 @@ from bia_bmz_integrator.data_models.model_dataset_table import AnalysisParameter
               help="select a range of time points from the input image")
 @click.option("-b_ch", "--benchmark_channel", type= int, default=None, 
               help="select a channel to benchmark from the prediction")
-@click.option("-acc", "--study_acc", type=str, default="unspecified", 
+@click.option("-acc", "--study_acc", type=str, default=None, 
               help="the accession for the study")
-@click.option("-uuid", "--dataset_uuid", type=str, default="unspecified", 
+@click.option("-uuid", "--dataset_uuid", type=str, default=None, 
               help="the uuid of the dataset with which the image is associated")
-@click.option("-ann_uuid", "--annotation_dataset_uuid", type=str, default="unspecified", 
+@click.option("-ann_uuid", "--annotation_dataset_uuid", type=str, default=None, 
               help="the uuid of the annotation dataset with which the image is associated")
 @click.option("-p", "--plot_images", default=True, 
               help="show input and output images; defaults to showing the images")
@@ -128,6 +128,15 @@ def save_result(
    
    output_dir = "./results/jsons"
    os.makedirs(output_dir, exist_ok=True)
+
+   # None values as default for these are useful for the model-dataset table, 
+   # but need to be a string for filenames, and may as well be something other than none 
+   if study_acc is None:
+      study_acc = "unspecified"
+   if dataset_uuid is None:
+      dataset_uuid = "unspecified"
+   if annotation_dataset_uuid is None:
+      annotation_dataset_uuid = "unspecified"
    
    results_list = [asdict(result)]
    output_file = (
