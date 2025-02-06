@@ -6,7 +6,7 @@ from rich.table import Table
 import matplotlib.pyplot as plt
 from dataclasses import asdict
 from bia_bmz_integrator.process.run_benchmark_models import process_benchmark, process_run
-from bia_bmz_integrator.models.model_dataset_table import AnalysisParameters, ModelDatasetTable
+from bia_bmz_integrator.data_models.model_dataset_table import AnalysisParameters, ModelDatasetTable
 
 
 @click.command()
