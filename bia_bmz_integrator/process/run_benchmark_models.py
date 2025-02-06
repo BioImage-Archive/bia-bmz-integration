@@ -6,6 +6,7 @@ import cv2
 from bia_bmz_integrator.process.image_utils import (
     remote_zarr_to_model_input, 
     crop_center, 
+    slice_image, 
     reorder_array_dimensions, 
     show_images, 
     show_images_gt, 
@@ -28,25 +29,11 @@ def process_run(
     # Load image and annotations
     dask_array = remote_zarr_to_model_input(ome_zarr_uri)
 
-    # Optional cropping
-    if crop_image:
-        dask_array = crop_center(dask_array, crop_image)
-
-    # Slices and channel selection
-    if z_slices:
-        dask_array = dask_array[:, :, z_slices[0]:z_slices[1], :, :]
-        if dask_array.ndim < 5:
-            dask_array = np.expand_dims(dask_array, 2)
-
-    if channel is not None:
-        dask_array = dask_array[:, channel, :, :, :]
-        dask_array = np.expand_dims(dask_array, 1)
-
-    if t_slices:
-        dask_array = dask_array[t_slices[0]:t_slices[1], :, :, :, :]
+    # slice image
+    sliced_array = slice_image(dask_array, crop_image, z_slices, channel, t_slices)
 
     # Run model inference
-    new_np_array = np.squeeze(dask_array).compute()
+    new_np_array = np.squeeze(sliced_array).compute()
     prediction, sample, inp_id, outp_id = run_model_inference(bmz_model, new_np_array)
 
     # Process results for benchmarking
@@ -85,25 +72,12 @@ def process_benchmark(
     dask_array = remote_zarr_to_model_input(ome_zarr_uri)
     ref_array = remote_zarr_to_model_input(reference_annotations)
 
-    # Optional cropping
-    if crop_image:
-        dask_array = crop_center(dask_array, crop_image)
-        ref_array = crop_center(ref_array, crop_image)
-
-    # Slices and channel selection
-    if z_slices:
-        dask_array = dask_array[:, :, z_slices[0]:z_slices[1], :, :]
-        ref_array = ref_array[:, :, z_slices[0]:z_slices[1], :, :]
-
-    if channel is not None:
-        dask_array = dask_array[:, channel, :, :, :]
-        ref_array = ref_array[:, channel, :, :, :]
-    if t_slices:
-        dask_array = dask_array[t_slices[0]:t_slices[1], :, :, :, :]
-        ref_array = ref_array[t_slices[0]:t_slices[1], :, :, :, :]
+    # slice images
+    sliced_array = slice_image(dask_array, crop_image, z_slices, channel, t_slices)
+    ref_array = slice_image(ref_array, crop_image, z_slices, 0, t_slices)
 
     # Run model inference
-    new_np_array = np.squeeze(dask_array).compute()
+    new_np_array = np.squeeze(sliced_array).compute()
     prediction, sample, inp_id, outp_id = run_model_inference(bmz_model, new_np_array)
 
     # Process results for benchmarking

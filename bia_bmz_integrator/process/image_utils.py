@@ -26,7 +26,34 @@ def crop_center(array,window):
         return array[:,:,:,starty:starty+window[1],startx:startx+window[0]]
     else:
         print("reshape window values must be smaller than image dimensions")
- 
+
+
+# to do all types of slicing
+def slice_image(
+    image_array, 
+    crop_image, 
+    z_slices, 
+    channel, 
+    t_slices, 
+):
+
+    if crop_image:
+        image_array = crop_center(image_array, crop_image)
+
+    if z_slices:
+        image_array = image_array[:, :, z_slices[0]:z_slices[1], :, :]
+        if image_array.ndim < 5:
+            image_array = np.expand_dims(image_array, 2)
+
+    # channel always has value, never None
+    image_array = image_array[:, channel, :, :, :]
+    image_array = np.expand_dims(image_array, 1)
+
+    if t_slices:
+        image_array = image_array[t_slices[0]:t_slices[1], :, :, :, :]
+
+    return image_array
+    
 
 # Function to reorder tensor dimensions to match OME.Zarr dimension order: "TCZYX". Returns an array
 def reorder_array_dimensions(in_tensor, in_id):
