@@ -3,26 +3,26 @@ import torch
 import pandas as pd
 import warnings
 import cv2
-from image_utils import (
+from bia_bmz_integrator.process.image_utils import (
     remote_zarr_to_model_input, 
     crop_center, 
     reorder_array_dimensions, 
     show_images, 
     show_images_gt, 
 )
-from predict import run_model_inference
-from benchmark import segmentation_scores, restoration_scores
+from bia_bmz_integrator.process.predict import run_model_inference
+from bia_bmz_integrator.process.benchmark import segmentation_scores, restoration_scores
 
 
 def process_run(
     bmz_model, 
     ome_zarr_uri, 
-    plot_images=True, 
-    crop_image=None, 
-    z_slices=None, 
-    channel=None, 
-    t_slices=None, 
-    benchmark_channel=0
+    crop_image, 
+    z_slices, 
+    channel, 
+    t_slices, 
+    benchmark_channel, 
+    plot_images
 ) -> dict:
     
     # Load image and annotations
@@ -73,12 +73,12 @@ def process_benchmark(
     bmz_model, 
     ome_zarr_uri, 
     reference_annotations, 
-    plot_images=True, 
-    crop_image=None, 
-    z_slices=None, 
-    channel=None, 
-    t_slices=None, 
-    benchmark_channel=0
+    crop_image, 
+    z_slices, 
+    channel, 
+    t_slices, 
+    benchmark_channel, 
+    plot_images
 ) -> dict:
     
     # Load image and annotations
