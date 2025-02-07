@@ -6,3 +6,7 @@ build/
 bia_bmz_integrator.egg-info/
 bia-bmz-integration.tar
 dockerfile_spares
+
+__pycache__/
+*.pyc
+*.pyo
