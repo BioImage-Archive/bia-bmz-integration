@@ -31,7 +31,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["bia_bmz_integrator", "bia_bmz_integrator.models", "bia_bmz_integrator.process", "bia_bmz_integrator.scripts"]
+packages = ["bia_bmz_integrator", "bia_bmz_integrator.data_models", "bia_bmz_integrator.process", "bia_bmz_integrator.scripts"]
 include-package-data = true
 
 [project.scripts]
