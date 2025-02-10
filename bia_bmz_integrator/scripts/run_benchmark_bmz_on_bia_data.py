@@ -115,7 +115,14 @@ def cli(
       analysis_params,  
    )
    
-   save_model_dataset_table(result_table, study_acc, dataset_uuid, annotation_dataset_uuid, bmz_model)
+   save_model_dataset_table(
+      result_table, 
+      study_acc, 
+      dataset_uuid, 
+      annotation_dataset_uuid, 
+      bmz_model, 
+      analysis_params, 
+   )
    save_images(result, result_table, adjust_image)
 
 
