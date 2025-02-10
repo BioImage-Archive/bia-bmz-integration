@@ -1,3 +1,6 @@
+import os
+import json
+from dataclasses import asdict
 from bia_bmz_integrator.data_models.model_dataset_table import ModelDatasetTable
 
 
@@ -61,3 +64,37 @@ def make_model_dataset_table(
       result.dice=scores[3]
    
    return result
+
+
+def save_model_dataset_table(
+      result, 
+      study_acc, 
+      dataset_uuid, 
+      annotation_dataset_uuid, 
+      bmz_model 
+):
+   
+   output_dir = "./results/jsons"
+   os.makedirs(output_dir, exist_ok=True)
+
+   # None values as default for these are useful for the model-dataset table, 
+   # but need to be a string for filenames, and may as well be something other than none 
+   if study_acc is None:
+      study_acc = "unspecified"
+   if dataset_uuid is None:
+      dataset_uuid = "unspecified"
+   if annotation_dataset_uuid is None:
+      annotation_dataset_uuid = "unspecified"
+   
+   results_list = [asdict(result)]
+   output_file = (
+      output_dir + 
+      "/result_" + 
+      study_acc + "_" + 
+      dataset_uuid + "_" + 
+      annotation_dataset_uuid + "_" +
+      bmz_model + 
+      ".json"
+   )
+   with open(output_file, "w") as f:
+      json.dump(results_list, f, indent=4)
