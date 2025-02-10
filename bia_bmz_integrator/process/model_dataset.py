@@ -31,14 +31,14 @@ def make_model_dataset_table(
       annotation_dataset_uuid = "unspecified"
 
    image_filename = (
-      "/public/ai-galleries/example-images/" +
+      "/bioimage-archive/ai-galleries/example-images/" +
       "example_image_" + 
       study_acc + "_" + 
       dataset_uuid + 
       ".png"
    )
    prediction_filename = (
-      "/public/ai-galleries/example-images/" + 
+      "/bioimage-archive/ai-galleries/example-images/" + 
       "prediction_image_" +
       study_acc + "_" + 
       dataset_uuid + "_" + 
@@ -51,7 +51,7 @@ def make_model_dataset_table(
    
    if scores:
       ground_truth_filename = (
-         "/public/ai-galleries/example-images/" +
+         "/bioimage-archive/ai-galleries/example-images/" +
          "ground_truth_" + 
          study_acc + "_" + 
          annotation_dataset_uuid + 
