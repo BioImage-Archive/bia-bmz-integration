@@ -1,7 +1,11 @@
 import numpy as np
+from numpy.typing import NDArray
+from typing import Any
 import matplotlib.pyplot as plt
 import zarr
+from PIL import Image, ImageOps
 import dask.array as da
+import os
 
 
 def remote_zarr_to_model_input(ome_zarr_uri):
@@ -125,3 +129,78 @@ def show_images(dask_array, output_array, binary_output, benchmark_channel=0):
     ax5.axis("off")
     plt.imshow(binary_output[0, 0, 0, :, :])
     plt.show()
+
+
+def convert_image_bit_depth(
+    image: NDArray[Any], 
+) -> Image.Image:
+   
+   image = Image.fromarray(image)
+
+   if image.mode != "L":
+      image = image.convert("L")
+   
+   return image
+
+
+def adjust_image_brightness(
+    image: Image.Image, 
+    correction_type: str, 
+) -> Image.Image:
+
+    if correction_type == "auto":
+        # the (0, 1) leaves top 1% out of histogram stretch
+        image = ImageOps.autocontrast(image, (0, 1)) 
+    elif correction_type == "gamma":
+        image = adjust_gamma(image)
+    
+    return image
+
+
+def adjust_gamma(
+    image: Image.Image, 
+) -> Image.Image:
+
+    # hardcoded gamma for now
+    gamma = 1.5
+    inv_gamma = 1.0 / gamma  
+    table = [int((i / 255.0) ** inv_gamma * 255) for i in range(256)]
+    
+    return image.point(table)
+
+
+def save_images(
+   result, 
+   result_table, 
+   adjust_image, 
+):
+   
+   input_image = result["input_image"]
+   prediction_image = result["prediction_image"]
+   ground_truth_image = result["ground_truth_image"]
+
+   # saving central slice of each image
+   shape = input_image.shape
+   centre_indices = tuple(s // 2 for s in shape[:3])
+   
+   input_output = input_image[centre_indices[0], centre_indices[1], centre_indices[2], :, :]
+   prediction_output = prediction_image[centre_indices[0], centre_indices[1], centre_indices[2], :, :]
+
+   if adjust_image is not None:
+      input_output = convert_image_bit_depth(input_output)
+      input_output = adjust_image_brightness(input_output, adjust_image) 
+      
+   input_filename = os.path.basename(result_table.example_image)
+   prediction_filename = os.path.basename(result_table.example_process_image)
+
+   output_dir = "./results/images/"
+   os.makedirs(output_dir, exist_ok=True)
+
+   plt.imsave(output_dir + input_filename, input_output, cmap="gray")
+   plt.imsave(output_dir + prediction_filename, prediction_output, cmap="gray")
+   
+   if ground_truth_image is not None:
+      ground_truth_output = ground_truth_image[centre_indices[0], centre_indices[1], centre_indices[2], :, :]
+      ground_truth_filename = os.path.basename(result_table.example_ground_truth)
+      plt.imsave(output_dir + ground_truth_filename, ground_truth_output, cmap="gray")
+
