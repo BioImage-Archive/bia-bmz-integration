@@ -4,7 +4,7 @@ import glob
 def amalgamate_jsons():
     
     all_results = []
-    for file in glob.glob('./results/jsons/result_*.json'):
+    for file in glob.glob('./results/jsons/*.json'):
         with open(file) as f:
             all_results.extend(json.load(f))
 
