@@ -1,39 +1,38 @@
-[build-system]
-requires = ["setuptools >= 61"]
-build-backend = "setuptools.build_meta"
-
-[project]
+[tool.poetry]
 name = "bia_bmz_integrator"
 version = "0.1.0"
 description = "Integration of BioImage Archive and BioImage Model Zoo."
+authors = ["Teresa Zulueta Coarasa", "Craig Russell", "Christopher Rookyard"]
 readme = "README.md"
-license = { text = "" }
-authors = [
-    {name = "Teresa Zulueta Coarasa"},
-    {name = "Craig Russell"}, 
-    {name = "Christopher Rookyard"},
-]
-requires-python = ">=3.10"
-dependencies = [
-    "bioimageio-core", 
-    "bioimageio-spec", 
-    "click", 
-    "dask", 
-    "matplotlib", 
-    "monai", 
-    "numpy", 
-    "opencv-python", 
-    "pandas", 
-    "requests",
-    "torch", 
-    "torchvision", 
-    "zarr",  
+packages = [
+    { include = "bia_bmz_integrator" },
+    { include = "bia_bmz_integrator/data_models" },
+    { include = "bia_bmz_integrator/process" },
+    { include = "bia_bmz_integrator/scripts" },
 ]
 
-[tool.setuptools]
-packages = ["bia_bmz_integrator", "bia_bmz_integrator.data_models", "bia_bmz_integrator.process", "bia_bmz_integrator.scripts"]
-include-package-data = true
+[tool.poetry.dependencies]
+python = ">=3.10"
+aiohttp = "*"
+bioimageio-core = "0.7.0"
+bioimageio-spec = "0.5.3.5"
+click = "*"
+dask = "*"
+matplotlib = "*"
+monai = "*"
+numpy = "*"
+opencv-python = "*"
+pandas = "*"
+pillow = "*"
+torch = "2.2.2"
+torchvision = "*"
+requests = "*"
+zarr = "*"
 
-[project.scripts]
+[tool.poetry.scripts]
 bia_bmz_benchmark = "bia_bmz_integrator.scripts.run_benchmark_bmz_on_bia_data:cli"
 amalgamate_jsons = "bia_bmz_integrator.scripts.amalgamate_jsons:amalgamate_jsons"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
