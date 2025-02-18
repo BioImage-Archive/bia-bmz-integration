@@ -26,4 +26,4 @@ bia-bmz-integration.tar
 .vscode
 
 # big script inputs
-batch_run.txt
+big_batch.txt

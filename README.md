@@ -2,41 +2,31 @@
 
 *For testing and deploying BioImage Model Zoo models on BioImage Archive images.*
 
-## Running locally with conda
+## Running locally with Poetry
 
-After cloning, from the top level of this repository, create the conda environment like so:
+After cloning, from the top level of this repository, install the project:
 
-    conda env create -f env.yaml
+    poetry install 
 
-and this'll also install bia_bmz_integrator. Activate the environment thus:
+and after that, to run a model on an image, or to get benchmarking metrics for the model, run `bia_bmz_benchmark`. For example, view parameters with --help:
 
-    conda activate bia-bmz-integration
-
-and once the environment is activated, to run a model on an image, or to get benchmarking metrics for the model, run `bia_bmz_benchmark`. For example, view parameters with --help:
-
-    bia_bmz_benchmark --help
+    poetry run bia_bmz_benchmark --help
 
 see *bia_bmz_benchmark*, further below, for more details.
 
-After running an analysis, the results will be found in `/results`, relative to the top level of this repository, assuming you didn't run the command from another location. See *Results*, further below, for details.
+Note that if you'd rather not have to bother with `poetry run` at the start of each command, you can do this:
 
-## Running for development, in a local conda environment
+    eval $(poetry env activate)
 
-If you'll want to make changes to the code and have them take effect immediately, install the bia_bmz_integrator package in editable mode. A distinct conda environment exists for this, and if you're running from the top level of this repository, create it like so: 
+again from the top level of this repository, and you'll be inside the virtual environment for the project. Thus you can omit `poetry run`, so the above would become:
 
-    conda env create -f ./dev/env.yaml 
+    bia_bmz_benchmark --help
 
-and you can activate it like this:
-
-    conda activate bia-bmz-integration-dev
-
-then your changes to any bia_bmz_integrator code will work straight away. 
-
-Again, after running an analysis, the results will be found in `/results`, relative to the top level of this repository, assuming you didn't run the command from another location. See *Results*, further below, for details.
+and after running an analysis, the results will be found in `/results`, relative to the top level of this repository, assuming you didn't run the command from another location. See *Results*, further below, for details.
 
 ## Running locally, in batch
 
-There exists in this repository a shell script, `run_batch.sh`, that you can use to line up multiple model/data combinations when running locally (including in development). This script takes as input a text file, and example of which, `batch_input_example.txt` is provided here. Information on the text file is given in *Using Nextflow to run an analysis in the container*, under *Running on a cluster*, below. And again, see *Results*, further below, for details on the output. 
+There exists in this repository a shell script, `run_batch.sh`, that you can use to line up multiple model/data combinations when running locally. This script takes as input a text file, and example of which, `batch_input_example.txt` is provided here. Information on the text file is given in *Using Nextflow to run an analysis in the container*, under *Running on a cluster*, below. And again, see *Results*, further below, for details on the output. 
 
 ## Running in a container
 
