@@ -131,7 +131,21 @@ def show_images(dask_array, output_array, binary_output, benchmark_channel=0):
     plt.show()
 
 
-def convert_image_bit_depth(
+def scale_to_uint8(
+    image: NDArray[Any], 
+) -> NDArray[Any]:
+
+    scaled = image.astype(np.float32)
+
+    if scaled.max() - scaled.min() == 0:
+        return np.zeros(image.shape, dtype=np.uint8)
+
+    scaled = 255 * (scaled - scaled.min()) / (scaled.max() - scaled.min())
+
+    return scaled.astype(np.uint8)
+
+
+def convert_to_greyscale(
     image: NDArray[Any], 
 ) -> Image.Image:
    
@@ -144,9 +158,11 @@ def convert_image_bit_depth(
 
 
 def adjust_image_brightness(
-    image: Image.Image, 
+    image_array: NDArray[Any], 
     correction_type: str, 
 ) -> Image.Image:
+    
+    image = Image.fromarray(image_array)
 
     if correction_type == "auto":
         # the (0, 1) leaves top 1% out of histogram stretch
@@ -187,8 +203,11 @@ def save_images(
    prediction_output = prediction_image[centre_indices[0], centre_indices[1], centre_indices[2], :, :]
 
    if adjust_image is not None:
-      input_output = convert_image_bit_depth(input_output)
-      input_output = adjust_image_brightness(input_output, adjust_image) 
+        input_output = scale_to_uint8(input_output)
+        prediction_output = scale_to_uint8(prediction_output)
+
+        input_output = adjust_image_brightness(input_output, adjust_image) 
+        prediction_output = adjust_image_brightness(prediction_output, adjust_image)
       
    input_filename = os.path.basename(result_table.example_image)
    prediction_filename = os.path.basename(result_table.example_process_image)
