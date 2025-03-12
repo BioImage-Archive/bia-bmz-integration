@@ -3,7 +3,7 @@
 set -e
 
 # Input file and Python script
-input_file="batch_input_example.txt"
+input_file="testing_inputs.txt"
 script_1="bia_bmz_benchmark"
 script_2="amalgamate_jsons"
 
