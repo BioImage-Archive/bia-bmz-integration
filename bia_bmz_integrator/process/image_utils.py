@@ -191,35 +191,32 @@ def save_images(
    adjust_image, 
 ):
    
-   input_image = result["input_image"]
-   prediction_image = result["prediction_image"]
-   ground_truth_image = result["ground_truth_image"]
+    input_image = result["input_image"]
+    prediction_image = result["prediction_image"]
+    ground_truth_image = result["ground_truth_image"]
 
-   # saving central slice of each image
-   shape = input_image.shape
-   centre_indices = tuple(s // 2 for s in shape[:3])
-   
-   input_output = input_image[centre_indices[0], centre_indices[1], centre_indices[2], :, :]
-   prediction_output = prediction_image[centre_indices[0], centre_indices[1], centre_indices[2], :, :]
+    # saving central slice of each image
+    shape = input_image.shape
+    centre_indices = tuple(s // 2 for s in shape[:3])
 
-   if adjust_image is not None:
-        input_output = scale_to_uint8(input_output)
-        prediction_output = scale_to_uint8(prediction_output)
+    input_output = input_image[centre_indices[0], centre_indices[1], centre_indices[2], :, :]
+    prediction_output = prediction_image[centre_indices[0], centre_indices[1], centre_indices[2], :, :]
 
-        input_output = adjust_image_brightness(input_output, adjust_image) 
-        prediction_output = adjust_image_brightness(prediction_output, adjust_image)
-      
-   input_filename = os.path.basename(result_table.example_image)
-   prediction_filename = os.path.basename(result_table.example_process_image)
+    if adjust_image is not None:
+            input_output = scale_to_uint8(input_output)
+            input_output = adjust_image_brightness(input_output, adjust_image) 
 
-   output_dir = "./results/images/"
-   os.makedirs(output_dir, exist_ok=True)
+    input_filename = os.path.basename(result_table.example_image)
+    prediction_filename = os.path.basename(result_table.example_process_image)
 
-   plt.imsave(output_dir + input_filename, input_output, cmap="gray")
-   plt.imsave(output_dir + prediction_filename, prediction_output, cmap="gray")
-   
-   if ground_truth_image is not None:
-      ground_truth_output = ground_truth_image[centre_indices[0], centre_indices[1], centre_indices[2], :, :]
-      ground_truth_filename = os.path.basename(result_table.example_ground_truth)
-      plt.imsave(output_dir + ground_truth_filename, ground_truth_output, cmap="gray")
+    output_dir = "./results/images/"
+    os.makedirs(output_dir, exist_ok=True)
+
+    plt.imsave(output_dir + input_filename, input_output, cmap="gray")
+    plt.imsave(output_dir + prediction_filename, prediction_output, cmap="gray")
+
+    if ground_truth_image is not None:
+        ground_truth_output = ground_truth_image[centre_indices[0], centre_indices[1], centre_indices[2], :, :]
+        ground_truth_filename = os.path.basename(result_table.example_ground_truth)
+        plt.imsave(output_dir + ground_truth_filename, ground_truth_output, cmap="gray")
 
