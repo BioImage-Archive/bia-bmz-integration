@@ -28,7 +28,7 @@ from bia_bmz_integrator.process.image_utils import save_images
 @click.option("-ann_uuid", "--annotation_dataset_uuid", type=str, default=None, 
               help="the uuid of the annotation dataset with which the image is associated")
 @click.option("-adj_img", "--adjust_image", type=str, default=None, 
-              help="optional brightness adjustment of the output image; can choose auto or gamma")
+              help="optional brightness adjustment of a representative (central) slice of the input image for display; can choose auto or gamma")
 @click.option("-p", "--plot_images", default=True, 
               help="show input and output images; defaults to showing the images")
 
