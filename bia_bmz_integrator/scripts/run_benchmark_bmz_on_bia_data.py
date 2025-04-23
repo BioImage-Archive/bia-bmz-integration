@@ -1,13 +1,10 @@
 import click
-import json
-import os
 from rich.console import Console
 from rich.table import Table
-import matplotlib.pyplot as plt
-from dataclasses import asdict
 from bia_bmz_integrator.process.run_benchmark_models import process_benchmark, process_run
-from bia_bmz_integrator.process.model_dataset import make_model_dataset_table
+from bia_bmz_integrator.process.model_dataset import make_model_dataset_table, save_model_dataset_table
 from bia_bmz_integrator.data_models.model_dataset_table import AnalysisParameters
+from bia_bmz_integrator.process.image_utils import save_images
 
 
 @click.command()
@@ -30,6 +27,8 @@ from bia_bmz_integrator.data_models.model_dataset_table import AnalysisParameter
               help="the uuid of the dataset with which the image is associated")
 @click.option("-ann_uuid", "--annotation_dataset_uuid", type=str, default=None, 
               help="the uuid of the annotation dataset with which the image is associated")
+@click.option("-adj_img", "--adjust_image", type=str, default=None, 
+              help="optional brightness adjustment of a representative (central) slice of the input image for display; can choose auto or gamma")
 @click.option("-p", "--plot_images", default=True, 
               help="show input and output images; defaults to showing the images")
 
@@ -46,6 +45,7 @@ def cli(
    study_acc, 
    dataset_uuid, 
    annotation_dataset_uuid, 
+   adjust_image, 
    plot_images
 ):
    
@@ -61,6 +61,7 @@ def cli(
       channel, 
       t_slices, 
       benchmark_channel, 
+      adjust_image, 
       plot_images 
    )
 
@@ -114,73 +115,9 @@ def cli(
       analysis_params,  
    )
    
-   save_result(result_table, study_acc, dataset_uuid, annotation_dataset_uuid, bmz_model)
-   save_images(result, result_table)
+   save_model_dataset_table(result_table, study_acc, dataset_uuid, annotation_dataset_uuid, bmz_model)
+   save_images(result, result_table, adjust_image)
 
-
-def save_result(
-      result, 
-      study_acc, 
-      dataset_uuid, 
-      annotation_dataset_uuid, 
-      bmz_model 
-):
-   
-   output_dir = "./results/jsons"
-   os.makedirs(output_dir, exist_ok=True)
-
-   # None values as default for these are useful for the model-dataset table, 
-   # but need to be a string for filenames, and may as well be something other than none 
-   if study_acc is None:
-      study_acc = "unspecified"
-   if dataset_uuid is None:
-      dataset_uuid = "unspecified"
-   if annotation_dataset_uuid is None:
-      annotation_dataset_uuid = "unspecified"
-   
-   results_list = [asdict(result)]
-   output_file = (
-      output_dir + 
-      "/result_" + 
-      study_acc + "_" + 
-      dataset_uuid + "_" + 
-      annotation_dataset_uuid + "_" +
-      bmz_model + 
-      ".json"
-   )
-   with open(output_file, "w") as f:
-      json.dump(results_list, f, indent=4)
-
-
-def save_images(
-   result, 
-   result_table, 
-):
-   
-   input_image = result["input_image"]
-   prediction_image = result["prediction_image"]
-   ground_truth_image = result["ground_truth_image"]
-
-   # saving central slice of each image
-   shape = input_image.shape
-   centre_indices = tuple(s // 2 for s in shape[:3])
-   
-   input_output = input_image[centre_indices[0], centre_indices[1], centre_indices[2], :, :]
-   prediction_output = prediction_image[centre_indices[0], centre_indices[1], centre_indices[2], :, :]
-   
-   input_filename = os.path.basename(result_table.example_image)
-   prediction_filename = os.path.basename(result_table.example_process_image)
-
-   output_dir = "./results/images/"
-   os.makedirs(output_dir, exist_ok=True)
-
-   plt.imsave(output_dir + input_filename, input_output, cmap="gray")
-   plt.imsave(output_dir + prediction_filename, prediction_output, cmap="gray")
-   
-   if ground_truth_image is not None:
-      ground_truth_output = ground_truth_image[centre_indices[0], centre_indices[1], centre_indices[2], :, :]
-      ground_truth_filename = os.path.basename(result_table.example_ground_truth)
-      plt.imsave(output_dir + ground_truth_filename, ground_truth_output, cmap="gray")
 
 
 def print_update(
@@ -195,6 +132,7 @@ def print_update(
    channel, 
    t_slices, 
    benchmark_channel, 
+   adjust_image, 
    plot_images 
 ):
 
@@ -216,6 +154,7 @@ def print_update(
    table.add_row("channel", str(channel) if channel is not None else "None")
    table.add_row("t slices", str(t_slices) if t_slices is not None else "None")
    table.add_row("benchmark channel", str(benchmark_channel) if benchmark_channel is not None else "None")
+   table.add_row("image adjustment", str(adjust_image) if adjust_image is not None else "None")
    table.add_row("plotting", str(plot_images))
 
    console.print(table)

@@ -166,6 +166,11 @@ By default, the input and prediction images are shown you can prevent this with 
 
     bia_bmz_benchmark "affable-shark" "https://uk1s3.embassy.ebi.ac.uk/bia-zarr-test/normal_26.ome.zarr/0" "https://uk1s3.embassy.ebi.ac.uk/bia-zarr-test/normal_26_mask.ome.zarr/0" --plot_images False
 
+With each analysis run, some representative images are saved (see *Results*, below), and among these is the central slice of the input image. For a representative display image, this can occasionally be a bit dim — if you want to adjust its brightness, there is the `--adjust_image` option, which can take the value `auto`, for histogram normalisation (with top 1% of intensities excluded from the calculation, see [here](https://pillow.readthedocs.io/en/stable/reference/ImageOps.html#:~:text=PIL.ImageOps.-,autocontrast,-(image%3A))), or `gamma` (with a hardcoded gamma value of 1.5), for gamma correction. For example:
+
+    bia_bmz_benchmark emotional-cricket https://uk1s3.embassy.ebi.ac.uk/bia-integrator-data/S-BIAD827/db4b8d36-e0d7-4eac-8298-3a6ba12f7806/91ab07f7-e0d6-4c0d-99a1-6318d25fbd4a.ome.zarr/0 --study_acc S-BIAD827 --dataset_uuid b0cef183-49b0-4911-ad36-b3058e65f272 --channel 0 --z_slices 27 37 --plot_images True --adjust_image gamma
+    bia_bmz_benchmark hiding-tiger https://uk1s3.embassy.ebi.ac.uk/bia-integrator-data/S-BIAD1269/a02452b5-3d5e-4d7d-9e51-04e39dad4163/4e270840-d939-4405-837b-a846037877b0.ome.zarr/0 --study_acc S-BIA1269 --dataset_uuid d12a9e60-ad30-4ffe-b993-a3f27b72e38b --plot_images True --adjust_image auto 
+
 ## Results
 
 The results of a prediction or benchmarking run are saved in a json file, like this: https://github.com/BioImage-Archive/BIA-astro/blob/main/src/data/ai-dataset-benchmarking/model-dataset-table.json. If an annotation image was provided, then the benchmarking metrics — precision, recall, IoU, and dice — will have values. 
